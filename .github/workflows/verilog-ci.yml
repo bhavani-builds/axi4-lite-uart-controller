@@ -1,0 +1,44 @@
+name: AXI UART Verilog CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  simulation:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+
+      - name: Compile RTL and Testbench
+        run: |
+          iverilog -g2012 -Wall \
+            -s axi_uart_tb \
+            -o axi_uart_sim \
+            rtl/baud_generator.v \
+            rtl/uart_tx.v \
+            rtl/uart_rx.v \
+            rtl/axi_lite_slave.v \
+            rtl/uart_registers.v \
+            rtl/axi_uart_top.v \
+            tb/axi_uart_tb.v
+
+      - name: Run Simulation
+        run: |
+          vvp axi_uart_sim
+
+      - name: Verify Waveform
+        run: |
+          test -f axi_uart.vcd
